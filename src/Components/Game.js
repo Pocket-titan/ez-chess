@@ -1,91 +1,73 @@
 import React, { Component } from 'react'
-import {
-  getSquares,
-  getMoves,
-  getNewBoard,
-  initialPieces,
-  isEnemyKingChecked,
-  sameCoords
-} from '../logic'
+import _ from 'lodash'
+import { equal, pieces } from '../logic'
+import { highlightMoves, clearMoves, movePiece } from '../logic/actions'
+
+// Components
 import Board from './Board'
 import Square from './Square'
 import Piece from './Piece'
 
+// Assets
+import TakeSound from '../assets/Capture.mp3'
+import MoveSound from '../assets/Move.mp3'
+
 class Game extends Component {
-  state = {
-    squares: getSquares(initialPieces),
-    activeSquare: { coords: [], moves: [] },
-    lastMove: { from: [], to: [] },
-    side: 'white',
-    turn: 'white',
+  componentDidUpdate = ({ squares: oldSquares }) => {
+    const { squares: newSquares } = this.props
+    // if the board changed, we need to play a sound!
+    if (!_.isEqual(oldSquares, newSquares)) {
+      const audio = new Audio(
+        pieces(oldSquares) > pieces(newSquares)
+          ? TakeSound
+          : MoveSound
+      )
+      audio.play()
+    }
   }
-
-  ourTurn = () => this.state.side === this.state.turn
-
-  ourPiece = ({ side }) => side === this.state.side
-
-  movePiece = (from, to) => {
-    const squares = getNewBoard(from, to, this.state.squares)
   
-    if (isEnemyKingChecked(this.state.side, squares)) {
-      console.log('check!')
-    }
-  
-    this.setState({
-      squares,
-      activeSquare: { coords: [], moves: [] },
-      lastMove: { from, to },
-      turn: this.state.turn === 'white' ? 'black' : 'white',
-      // TODO remove in production
-      side: this.state.side === 'white' ? 'black' : 'white',
-    })
-  }
-
-  onSquareClick = square => {
-    if (!this.ourTurn()) {
-      return
-    }
-  
-    const { coords: to, highlighted } = square
-    if (!highlighted) {
-      return
-    }
-    const { coords: from } = this.state.activeSquare
-    this.movePiece(from, to)
-  }
-
-  onPieceClick = piece => {
-    if (!this.ourTurn() || !this.ourPiece(piece)) {
-      return
-    }
-  
-    if (sameCoords(this.state.activeSquare.coords, piece.coords)) {
-      return this.setState({ activeSquare: { coords: [], moves: [] } })
-    }
-  
-    const moves = getMoves(piece, this.state.squares)
-    this.setState({ activeSquare: { coords: piece.coords, moves } })
-  }
-
   render() {
-    const { squares, activeSquare, lastMove } = this.state
+    const { squares, turn, side, lastMove, active, highlighted } = this.props
+    let myTurn = turn === side
+
+    let myPiece = piece => piece.side === side
+
+    let onPieceClick = piece => {
+      if (!myTurn || !myPiece(piece)) {
+        return
+      }
+
+      if (equal(active, piece.coords)) {
+        return clearMoves()
+      }
+    
+      highlightMoves(piece)
+    }
+
+    let onSquareClick = square => {
+      if (!square.highlighted) {
+        return
+      }
+      movePiece(square.coords)
+    }
     return (
-      <Board squares={squares}>
+      <Board squares={squares} side={side}>
         {
           square =>
             <Square
               {...square}
-              active={sameCoords(activeSquare.coords, square.coords)}
-              highlighted={activeSquare.moves.some(coords => sameCoords(coords, square.coords))}
-              movedFrom={sameCoords(lastMove.from, square.coords)}
-              movedTo={sameCoords(lastMove.to, square.coords)}
-              onClick={this.onSquareClick}
+              onClick={onSquareClick}
+              movedFrom={equal(square.coords, lastMove.from)}
+              movedTo={equal(square.coords, lastMove.to)}
+              active={equal(square.coords, active)}
+              highlighted={highlighted.some(([x, y]) => equal(square.coords, [x, y]))}
             >
               {
                 square.piece &&
                   <Piece
                     {...square.piece}
-                    onClick={this.onPieceClick}
+                    myPiece={myPiece(square.piece)}
+                    onClick={onPieceClick}
                   />
               }
             </Square>

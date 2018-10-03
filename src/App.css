@@ -14,15 +14,41 @@
   background-color: gray;
 }
 
+@keyframes rainbow {
+  0% {
+    background-color: #d5ffeb;
+  }
+
+  20% {
+    background-color: #7efaff;
+  }
+
+  40% {
+    background-color: #76a4ff;
+  }
+
+  60% {
+    background-color: #9174ff;
+  }
+
+  80% {
+    background-color: #be74ff;
+  }
+
+  100% {
+    background-color: #d5ffeb;
+  }
+}
+
 .highlighted {
   cursor: pointer;
 }
 
-.highlighted.light:hover {
+.highlighted.light:hover, .isOver.light {
   background-color: #aeb188 !important;
 }
 
-.highlighted.dark:hover {
+.highlighted.dark:hover, .isOver.dark {
   background-color: #6b6039 !important;
 }
 
@@ -59,7 +85,9 @@
 }
 
 .dark {
-  background-color: #b58863;
+  /* background-color: #b58863; */
+  animation: rainbow 2s ease 0s infinite;
+  transition: background-color .1s ease;
 }
 
 /* pieces */

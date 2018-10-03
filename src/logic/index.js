@@ -1,4 +1,37 @@
-export const generateMoves = (piece, board) => {
+/*
+  Game logic and helper functions
+*/
+
+// check if two 2D arrays are equal
+export const equal = ([x1 = -1, y1 = -1], [x2 = -2, y2 = -2]) => x1 === x2 && y1 === y2
+
+// check if array is out of bounds
+const outOfBounds = ([x, y]) => !(x <= 7 && x >= 0 && y <= 7 && y >= 0)
+
+// get amount of pieces on board
+export const pieces = squares => (
+  Object.values(squares)
+    .filter(square => square.piece)
+    .length
+)
+
+// game stuff
+export const updateSquares = (from, to, squares) => ({
+  ...squares,
+  [from]: {
+    ...squares[from],
+    piece: void 0,
+  },
+  [to]: {
+    ...squares[to],
+    piece: {
+      ...squares[from].piece,
+      coords: to,
+    },
+  }
+})
+
+const generateMoves = (piece, board) => {
   const { name, side, coords: [ownX, ownY] } = piece
   const FORWARDS = side === 'white' ? 1 : -1
   const [ REJECT, STOP, CONTINUE ] = [ true, true, false ]
@@ -36,21 +69,6 @@ export const generateMoves = (piece, board) => {
   return moves
 }
 
-export const getNewBoard = (from, to, board) => ({
-  ...board,
-  [from]: {
-    ...board[from],
-    piece: void 0,
-  },
-  [to]: {
-    ...board[to],
-    piece: {
-      ...board[from].piece,
-      coords: to,
-    },
-  }
-})
-
 const isKingChecked = (side, board) => {
   const check = Object.entries(board)
     .filter(([, sq]) => sq.piece && sq.piece.side !== side)
@@ -60,41 +78,37 @@ const isKingChecked = (side, board) => {
   return check
 }
 
-export const isEnemyKingChecked = (side, board) => isKingChecked(side === 'white' ? 'black' : 'white', board)
+const isEnemyKingChecked = (side, board) => isKingChecked(side === 'white' ? 'black' : 'white', board)
 const isOurKingChecked = (side, board) => isKingChecked(side, board)
 
 export const getMoves = (piece, board) => (
   generateMoves(piece, board).filter(move => {
-    const newBoard = getNewBoard(piece.coords, move, board)
+    const newBoard = updateSquares(piece.coords, move, board)
     return !isOurKingChecked(piece.side, newBoard)
   })
 )
 
 export const getSquares = pieces => {
   const coordinates = [
-  [0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0],
-  [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1],
-  [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2],
-  [0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [6, 3], [7, 3],
-  [0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [7, 4],
-  [0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [7, 5],
-  [0, 6], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6], [7, 6],
-  [0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7],
-]
+    [0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0],
+    [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1],
+    [0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2],
+    [0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [6, 3], [7, 3],
+    [0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [7, 4],
+    [0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [7, 5],
+    [0, 6], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6], [7, 6],
+    [0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7],
+  ]
 
-return coordinates.reduce((obj, [x, y]) => {
-  const square = {
-    coords: [x, y],
-    piece: pieces.filter(piece => sameCoords(piece.coords, [x, y]))[0] || undefined,
-  }
-  obj[[x, y]] = square
-  return obj
-}, {})
+  return coordinates.reduce((obj, [x, y]) => {
+    const square = {
+      coords: [x, y],
+      piece: pieces.filter(piece => equal(piece.coords, [x, y]))[0] || undefined,
+    }
+    obj[[x, y]] = square
+    return obj
+  }, {})
 }
-
-const outOfBounds = ([x, y]) => !(x <= 7 && x >= 0 && y <= 7 && y >= 0)
-
-export const sameCoords = ([x1, y1], [x2, y2]) => x1 === x2 && y1 === y2
 
 let possibleMoves = {
   'pawn': [
